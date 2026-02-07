@@ -1,11 +1,16 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Upload, FileText, Sparkles, Edit3, CheckCircle, X } from "lucide-react";
+import { Upload, FileText, Sparkles, Edit3, CheckCircle, X, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { toast } from "react-toastify";
+import { useFileContext } from "./context/FileContext";
 
 export default function LandingPage() {
+  const router = useRouter()
+
   const [isDragging, setIsDragging] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -13,8 +18,10 @@ export default function LandingPage() {
   const [docContext, setDocContext] = useState("")
   const [studyGoal, setStudyGoal] = useState("General Summary")
   const [isCustom, setIsCustom] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const {setFile, setHighlights} = useFileContext()
 
-  
+
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation()
@@ -42,12 +49,12 @@ export default function LandingPage() {
     const file = e.dataTransfer.files?.[0]
 
     if (!file || file.type !== "application/pdf") {
-      console.warn("Invalid file type dropped.")
+      toast.warn("Invalid file type dropped.")
       return;
     }
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       processFileSelection(file)
-      console.log("File dropped:", e.dataTransfer.files[0]);
+      toast.success("File selected successfully")
     }
   };
 
@@ -57,8 +64,12 @@ export default function LandingPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
+      if(e.target.files[0].type !== "application/pdf") {
+        toast.warn("Invalid file type dropped")
+        return
+      }
       processFileSelection(e.target.files[0])
-      console.log("File selected:", e.target.files[0])
+      toast.success("File selected successfully")
     }
   }
 
@@ -67,18 +78,42 @@ export default function LandingPage() {
     setPopup(true)
     setDocContext("")
     setStudyGoal("General Summary")
+    setIsCustom(false)
   }
 
-  const handleStartAnalysis = () => {
-    if (!selectedFile) return
+  const handleStartAnalysis = async () => {
+    if (!selectedFile) return;
+    setIsLoading(true)
 
-    console.log("Submitting Payload:", {
-      file: selectedFile.name,
-      fileSize: selectedFile.size,
-      fileType: selectedFile.type,
-      context: docContext,
-      goal: studyGoal
-    })
+    const formData = new FormData()
+    formData.append("file", selectedFile)
+    formData.append("context", docContext || "General Study");
+    formData.append("studyGoal", studyGoal)
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/analyze-pdf`, {
+        method: "POST",
+        body: formData,
+      })
+
+      if (!response.ok) throw new Error(response.statusText)
+      const data = await response.json();
+
+    setFile(selectedFile)
+    setHighlights(data.highlights)
+    
+    const fileUrl = URL.createObjectURL(selectedFile)
+    
+    sessionStorage.setItem("currentPdfUrl", fileUrl)
+    sessionStorage.setItem("currentHighlights", JSON.stringify(data.highlights))
+    
+    
+    router.push("/editor")
+    } catch (error) {
+      console.error("Analysis failed:", error);
+      toast.error("Something went wrong. Try again")
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -87,7 +122,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="relative group cursor-pointer w-46">
             <Link href="/">
-            <Image src="/markread.png" alt="logo" width={1000} height={1000} loading="eager" />
+              <Image src="/markread.png" alt="logo" width={1000} height={1000} loading="eager" />
             </Link>
           </div>
 
@@ -127,12 +162,12 @@ export default function LandingPage() {
             ${isDragging ? "border-red-500 bg-red-50 scale-[1.02]" : "border-gray-200 hover:border-yellow-400"}
           `}
         >
-          <input 
-          type="file"
-          ref={fileInput}
-          onChange={handleFileChange}
-          className="hidden"
-          accept="application/pdf"
+          <input
+            type="file"
+            ref={fileInput}
+            onChange={handleFileChange}
+            className="hidden"
+            accept="application/pdf"
           />
           <div className={`p-4 rounded-full mb-4 transition-colors ${isDragging ? "bg-red-100" : "bg-yellow-50 group-hover:bg-yellow-100"}`}>
             <Upload className={`w-8 h-8 ${isDragging ? "text-red-600" : "text-yellow-600"}`} />
@@ -164,8 +199,8 @@ export default function LandingPage() {
                 <label className="block text-sm font-semibold text-gray-700 mb-1">
                   Topic / Context
                 </label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={docContext}
                   onChange={(e) => setDocContext(e.target.value)}
                   placeholder="e.g. Electrostatics, History of Rome..."
@@ -178,7 +213,7 @@ export default function LandingPage() {
                   Study Goal (Difficulty)
                 </label>
                 <div className="relative">
-                  <select 
+                  <select
                     value={isCustom ? "Other" : studyGoal}
                     onChange={(e) => {
                       if (e.target.value === "Other") {
@@ -207,8 +242,8 @@ export default function LandingPage() {
                     <label className="block text-xs font-semibold text-gray-500 mb-1 ml-1">
                       Specify your goal
                     </label>
-                    <input 
-                      type="text" 
+                    <input
+                      type="text"
                       value={studyGoal}
                       onChange={(e) => setStudyGoal(e.target.value)}
                       placeholder="e.g. UPSC History, Python Interview Prep..."
@@ -220,18 +255,28 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
-              <button 
+              <button
                 onClick={() => setPopup(false)}
                 className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors cursor-pointer hover:bg-neutral-200/60 rounded-lg"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={handleStartAnalysis}
-                className="px-6 py-2 text-sm font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 shadow-md shadow-red-200 transition-all hover:scale-105 flex items-center gap-2"
+                disabled= {isLoading}
+                className="px-6 py-2 text-sm font-bold text-white bg-red-600 rounded-lg hover:bg-red-700 shadow-md shadow-red-200 transition-all hover:scale-105 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                <Sparkles className="w-4 h-4" />
-                Start Analysis
+                {isLoading ? (
+                  <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Analyzing...
+                  </>
+                ): (
+                  <>
+                  <Sparkles className="w-4 h-4" />
+                  Start Analysis
+                  </>
+                )}
               </button>
             </div>
 
@@ -246,19 +291,19 @@ export default function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-        <StepCard 
+            <StepCard
               number="01"
               title="Upload & Context"
               description="Upload your notes and tell us what you're looking for. Are you cramming for an exam or researching Link thesis?"
               icon={<FileText className="w-6 h-6 text-red-600" />}
             />
-            <StepCard 
+            <StepCard
               number="02"
               title="AI Analysis"
               description="Our 'Brain & Hand' engine uses Gemini 3 to read your file and identify the exact concepts that matter."
               icon={<Sparkles className="w-6 h-6 text-yellow-600" />}
             />
-            <StepCard 
+            <StepCard
               number="03"
               title="Edit & Perfect"
               description="Review the highlights. Add your own, remove the ones you know, and export your perfectly tailored study guide."
@@ -277,7 +322,7 @@ export default function LandingPage() {
             <p className="text-lg text-gray-600">
               Most tools just summarize. We keep your original document intact but draw your attention to what matters, creating Link visual layer you can control.
             </p>
-            
+
             <div className="space-y-4">
               <FeatureItem text="Editable Highlights: Click to delete, drag to add." />
               <FeatureItem text="Context Aware: Tell AI 'Highlight only definitions' or 'Highlight dates'." />

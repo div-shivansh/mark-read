@@ -1,0 +1,26 @@
+/* Fix PDF.js Worker layer alignment */
+.PdfHighlighter {
+  position: absolute;
+  overflow: auto;
+  height: 100%;
+  width: 100%;
+  background: #f3f4f6;
+  display: flex;
+  justify-content: center;
+}
+
+.pdf-viewer {
+    margin: 20px 0;
+}
+
+/* The actual yellow box */
+.Highlight__part {
+  background: rgba(255, 226, 143, 0.6); /* Yellow Highlighter */
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.Highlight__part:hover {
+    background: rgba(255, 226, 143, 0.9);
+    border: 1px dashed #eab308;
+}
