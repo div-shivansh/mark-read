@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 # --- CONFIGURATION ---
 load_dotenv()
-genai.configure(api_key=_key=os.getenv("GEMINI_API_KEY"))
+genai.configure(api_key = os.getenv("GEMINI_API_KEY"))
 # Note: Ensure you are using a model you have access to. 
 # If 'preview' fails, switch back to 'gemini-1.5-flash' or 'gemini-2.0-flash'
 model = genai.GenerativeModel('models/gemini-3-flash-preview')
