@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFileContext } from '../context/FileContext'; // Get AI data from here
 import PDFViewer from '../components/PDFViewer'; // Import your new viewer
@@ -12,6 +12,7 @@ import { ArrowLeft } from 'lucide-react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { PDFDocument, rgb } from 'pdf-lib';
 import { toast } from 'react-toastify';
+import Image from 'next/image';
 
 // CONSTANT: This must match the scale in PDFViewer
 const VIEWER_SCALE = 1.5; 
@@ -19,6 +20,7 @@ const VIEWER_SCALE = 1.5;
 export default function EditorPage() {
   const router = useRouter();
   const { file, highlights: aiData } = useFileContext(); // Get Global Context
+  const toastShowRef = useRef(false)
   
   // Editor State
   const [selectedColor, setSelectedColor] = useState<HighlightColor>('#FFFF00');
@@ -26,6 +28,13 @@ export default function EditorPage() {
   const [lineHeight, setLineHeight] = useState<number>(20);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
 
+  useEffect(() => {
+    if (aiData && aiData.length === 0 && !toastShowRef.current) {
+      toast.error("Error getting highlights. Please use plane PDF files for now")
+      toastShowRef.current = true
+    }
+  }, [aiData])
+  
   // 1. Initialize & Convert AI Data
   useEffect(() => {
     if (!file) {
@@ -34,9 +43,6 @@ export default function EditorPage() {
       return;
     }
 
-    if (aiData && aiData.length > 0 ) {
-      toast.error("Error getting highlights. Please use plane PDF files for now")
-    }
     
     if (aiData && aiData.length > 0 && highlights.length === 0) {
       
@@ -158,10 +164,10 @@ export default function EditorPage() {
       link.click();
       URL.revokeObjectURL(url);
       
-      alert('PDF exported successfully!');
+      toast.success('PDF exported successfully!');
     } catch (error) {
       console.error('Error exporting PDF:', error);
-      alert('Failed to export PDF. Please try again.');
+      toast.error('Failed to export PDF. Please try again.');
     }
   };
 
@@ -171,14 +177,14 @@ export default function EditorPage() {
     <main className="min-h-screen bg-gray-50 flex flex-col h-screen">
       
       {/* Top Header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm z-20">
+      <header className="bg-white border-b border-gray-200 px-6 flex items-center justify-between shadow-sm z-20">
         <div className="flex items-center gap-4">
           <button onClick={() => router.push('/')} className="p-2 hover:bg-gray-100 rounded-full">
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
-          <h1 className="text-xl font-bold text-gray-800">
-            <span className="text-red-600">Mark</span>Editor
-          </h1>
+          <div className='w-46'>
+          <Image src="/markread.png" alt="logo" width={1000} height={1000} loading="eager" />
+          </div>
         </div>
         
         {/* Toolbar Integration */}
@@ -223,7 +229,7 @@ export default function EditorPage() {
                     <span>Highlights</span>
                     <span className="bg-gray-100 text-gray-600 px-2 rounded-full text-xs py-0.5">{highlights.length}</span>
                 </h3>
-                <div className="space-y-2 text-xs text-gray-400">
+                <div className="space-y-2 text-xs text-gray-400 overflow-y-auto h-82">
                     {highlights.map((h, i) => (
                         <div key={i} className="p-2 bg-gray-50 rounded border border-gray-100 flex gap-2 items-center">
                             <div className="w-3 h-3 rounded-full" style={{background: h.color}}></div>

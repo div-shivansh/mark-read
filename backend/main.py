@@ -6,10 +6,8 @@ from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
-from dotenv import load_dotenv
 
 # --- CONFIGURATION ---
-load_dotenv()
 genai.configure(api_key = os.getenv("GEMINI_API_KEY"))
 # Note: Ensure you are using a model you have access to. 
 # If 'preview' fails, switch back to 'gemini-1.5-flash' or 'gemini-2.0-flash'
@@ -47,7 +45,7 @@ def analyze_pdf_logic(input_path, context, study_goal):
     Goal: They want highlights suitable for "{study_goal}".
 
     Read the text below.
-    Identify the 5 most critical sentences or phrases.
+    Identify the most critical sentences or phrases.
     
     CRITICAL INSTRUCTION: 
     1. Return ONLY a raw JSON list of strings. 

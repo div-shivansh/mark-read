@@ -16,13 +16,13 @@ export default function ToolSelector({
   onLineHeightChange 
 }: ToolSelectorProps) {
   return (
-    <div className="flex gap-4 items-center p-4 bg-white rounded-lg shadow-sm flex-wrap hover:shadow-lg border border-gray-300/40 transition-all duration-200">
+    <div className="flex gap-4 items-center py-4 px-2 bg-white rounded-lg shadow-sm flex-wrap hover:shadow-lg border border-gray-300/40 transition-all duration-200">
       <span className="font-semibold text-gray-700">Tool Selector:</span>
       
       <div className="flex gap-3">
         <button
           onClick={() => onToolChange('line')}
-          className={`px-4 py-2 rounded-md font-medium transition-all duration-200 flex items-center gap-2 ${
+          className={`px-5 py-2 rounded-md font-medium transition-all duration-200 flex items-center gap-2 ${
             selectedTool === 'line'
               ? 'bg-blue-600 text-white shadow-md'
               : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
