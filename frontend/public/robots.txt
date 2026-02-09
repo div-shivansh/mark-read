@@ -1,0 +1,16 @@
+# Allow all standard bots (Google, Bing, etc.)
+User-agent: *
+Allow: /
+
+# Explicitly allow AI Bots (Optional but good for clarity)
+User-agent: GPTBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+# Point them to your sitemap
+Sitemap: https://mark-read.vercel.app/sitemap.xml

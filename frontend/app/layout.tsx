@@ -17,6 +17,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Mark&Read - AI Powered PDF Highlighter",
   description: "Highlight and annotate PDFs with AI-generated insights. Upload your PDF, and let our AI analyze the content to provide smart highlights and annotations. And if you want to customize the highlights, you can do that too! Just click on any highlight to change its color, shape, or even add your own notes. Perfect for students, professionals, and anyone who wants to get more out of their PDFs.",
+
+  verification: {
+    google: 'google7eb1583d8ad00465.html',
+  }
 };
 
 export default function RootLayout({

@@ -29,11 +29,11 @@ export default function EditorPage() {
   const [highlights, setHighlights] = useState<Highlight[]>([]);
 
   useEffect(() => {
-    if (aiData && aiData.length === 0 && !toastShowRef.current) {
+    if (aiData && aiData.length === 0 && !toastShowRef.current && file) {
       toast.error("Error getting highlights. Please use plane PDF files for now")
       toastShowRef.current = true
     }
-  }, [aiData])
+  }, [aiData, file])
   
   // 1. Initialize & Convert AI Data
   useEffect(() => {
